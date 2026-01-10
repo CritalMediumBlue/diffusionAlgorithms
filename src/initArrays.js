@@ -58,5 +58,6 @@ export const initADIArrays = (WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT) => 
         halfDeltaT,
         oneMinus2Alpha,
         scaledSources,
+        deltaT
     };
 };

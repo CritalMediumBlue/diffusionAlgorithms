@@ -21,23 +21,49 @@ const tolerance = 1e-10;
  * [...            ] [..]   [..]
  * ```
  *
- * @param {Array<number>} lowerDiagonal - Lower diagonal elements (a₁, a₂, ..., aₙ₋₁).
+ * @param {Float64Array|Array<number>} lowerDiagonal - Lower diagonal elements (a₁, a₂, ..., aₙ₋₁).
  *                                        First element (index 0) is ignored as it doesn't exist.
- * @param {Array<number>} mainDiagonal - Main diagonal elements (b₀, b₁, ..., bₙ₋₁).
- * @param {Array<number>} upperDiagonal - Upper diagonal elements (c₀, c₁, ..., cₙ₋₂).
+ * @param {Float64Array|Array<number>} mainDiagonal - Main diagonal elements (b₀, b₁, ..., bₙ₋₁).
+ * @param {Float64Array|Array<number>} upperDiagonal - Upper diagonal elements (c₀, c₁, ..., cₙ₋₂).
  *                                        Last element (index n-1) is ignored as it doesn't exist.
- * @param {Array<number>} rightHandSide - Right-hand side vector (d₀, d₁, ..., dₙ₋₁).
+ * @param {Float64Array|Array<number>} rightHandSide - Right-hand side vector (d₀, d₁, ..., dₙ₋₁).
  * @param {number} n - Size of the system (number of equations/unknowns).
- * @param {Array<number>} modifiedUpperDiagonal - Pre-allocated array to store modified upper diagonal
+ * @param {Float64Array|Array<number>} modifiedUpperDiagonal - Pre-allocated array to store modified upper diagonal
  *                                                during forward elimination. Must have length n.
- * @param {Array<number>} modifiedRightHandSide - Pre-allocated array to store modified right-hand side
+ * @param {Float64Array|Array<number>} modifiedRightHandSide - Pre-allocated array to store modified right-hand side
  *                                                during forward elimination. Must have length n.
- * @param {Array<number>} solution - Pre-allocated array where the solution vector will be stored.
+ * @param {Float64Array|Array<number>} solution - Pre-allocated array where the solution vector will be stored.
  *                                   Must have length n. Contains (x₀, x₁, ..., xₙ₋₁) after execution.
  *
- * @throws {Error} Implicitly handles near-singular matrices by replacing small pivots with tolerance value.
+ * @returns {void} The function modifies the `solution` array in-place.
  *
+ * @note The algorithm handles near-singular matrices by replacing pivots smaller than
+ * 1e-10 with the tolerance value to prevent division by zero. For truly singular matrices,
+ * results may be numerically unstable.
  *
+ * @complexity Time: O(n), Space: O(1) additional (uses pre-allocated arrays)
+ *
+ * @example
+ * // Solve a simple 3x3 tridiagonal system
+ * const n = 3;
+ * const lower = [0, 1, 1];          // First element unused
+ * const main = [2, 2, 2];
+ * const upper = [1, 1, 0];          // Last element unused
+ * const rhs = [3, 4, 3];
+ * 
+ * // Pre-allocate working arrays
+ * const modUpper = new Float64Array(n);
+ * const modRHS = new Float64Array(n);
+ * const solution = new Float64Array(n);
+ * 
+ * thomasAlgorithm(lower, main, upper, rhs, n, modUpper, modRHS, solution);
+ * console.log(solution); // [1, 1, 1]
+ *
+ * @see {@link ADI} Uses this algorithm for implicit solving
+ * @see {@link initADIArrays} Pre-allocates working arrays
+ *
+ * @reference Thomas, L. H. (1949). Elliptic problems in linear difference equations 
+ * over a network. Watson Sci. Comput. Lab. Rept., Columbia University, New York.
  */
 export function thomasAlgorithm(
     lowerDiagonal,

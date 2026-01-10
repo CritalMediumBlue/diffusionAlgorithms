@@ -36,14 +36,13 @@ export const setADIProperties = (width, height, diffusionCoefficient, deltaX, de
     } = initADIArrays(WIDTH, HEIGHT, diffusionCoefficient, deltaX, deltaT));
 };
 
-export const ADI = (concentrationData, sources, deltaT, timeLapse) => {
+export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
     let reachedNegativeValue = false;
 
     for (let idx = 0; idx < WIDTH * HEIGHT; idx++) {
         scaledSources[idx] = sources[idx] * halfDeltaT;
     }
 
-    const totalNumberOfIterations = Math.round(timeLapse / deltaT);
 
     const currentConcentrationData = concentrationData;
 
@@ -157,7 +156,7 @@ export const ADI = (concentrationData, sources, deltaT, timeLapse) => {
 
             for (let j = 0; j < HEIGHT; j++) {
                 const pos = j * WIDTH + i;
-                if (solution2[j] <= 0) {
+                if (solution2[j] < 0) {
                     reachedNegativeValue = true;
                 }
                 currentConcentrationData[pos] = solution2[j];
@@ -187,7 +186,7 @@ export const ADI = (concentrationData, sources, deltaT, timeLapse) => {
         );
 
         for (let j = 0; j < HEIGHT; j++) {
-            if (solution2[j] <= 0) {
+            if (solution2[j] < 0) {
                 reachedNegativeValue = true;
             }
             currentConcentrationData[j * WIDTH] = solution2[j];
@@ -215,7 +214,7 @@ export const ADI = (concentrationData, sources, deltaT, timeLapse) => {
             solution2
         );
         for (let j = 0; j < HEIGHT; j++) {
-            if (solution2[j] <= 0) {
+            if (solution2[j] < 0) {
                 reachedNegativeValue = true;
             }
             currentConcentrationData[j * WIDTH + (WIDTH - 1)] = solution2[j];
@@ -224,6 +223,9 @@ export const ADI = (concentrationData, sources, deltaT, timeLapse) => {
 
     if (reachedNegativeValue) {
         console.warn("Concentration went negative at ADI");
+        //return null;
     }
     return currentConcentrationData;
 };
+
+

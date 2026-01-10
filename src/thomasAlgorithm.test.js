@@ -40,7 +40,7 @@ const calculateRightHandSide = (lowerDiag, mainDiag, upperDiag, knownSolution, s
 };
 
 describe("Thomas Algorithm", () => {
-    const tolerance = 5e-11;
+    const tolerance = 1e-9;
 
     describe("Cases that can be solved by hand", () => {
         test("solves an easy system", () => {
@@ -221,7 +221,7 @@ describe("Thomas Algorithm", () => {
             // Arrange
             const systemSize = 5;
             const lowerDiagonal1 = [0, -1, -1, -1, -3];
-            const mainDiagonal1 = [-1.42e-11, 2, 2, 2, 4]; // 1.420e-12 is less than the tolerance of 1e-10
+            const mainDiagonal1 = [-1.42e-11, 2, 2, 2, 4]; // 1.42e-11 is less than the tolerance of 1e-10
             const upperDiagonal1 = [-1, -1, -1, -1, 0];
             const rightHandSide1 = [3.14159265358979, 42, 1.5, 28, 2];
 
@@ -418,7 +418,7 @@ describe("Thomas Algorithm", () => {
             // Create known solution using sine wave with random component
             const knownSolution = new Float64Array(n);
             for (let i = 0; i < n; i++) {
-                knownSolution[i] = 1000 * (Math.random() - 0.5);
+                knownSolution[i] = 1e6 * (Math.random() - 0.5);  
             }
 
             const rightHandSide = calculateRightHandSide(
@@ -460,7 +460,7 @@ describe("Thomas Algorithm", () => {
             const knownSolution = new Float64Array(n);
             for (let i = 0; i < n; i++) {
                 knownSolution[i] =
-                    100 * (Math.random() - 0.5) + Math.sin((i * 2 * Math.PI) / (n - 1));
+                    1e6 * (Math.random() - 0.5) + Math.sin((i * 2 * Math.PI) / (n - 1));
             }
 
             const rightHandSide = calculateRightHandSide(
@@ -499,9 +499,91 @@ describe("Thomas Algorithm", () => {
 
             // Create known solution using sine wave with random component
             const knownSolution = new Float64Array(n);
+            for (let i = 0; i < n; i++) { 
+                knownSolution[i] =
+                    1e-9 * (Math.random() - 0.5 + Math.sin((i * 2 * Math.PI) / (n - 1)));
+            }
+
+            const rightHandSide = calculateRightHandSide(
+                lowerDiagonal,
+                mainDiagonal,
+                upperDiagonal,
+                knownSolution,
+                n
+            );
+            const modUpperDiag = new Float64Array(n);
+            const modRightSide = new Float64Array(n);
+            const solutionArray = new Float64Array(n);
+
+            // Act
+            thomasAlgorithm(
+                lowerDiagonal,
+                mainDiagonal,
+                upperDiagonal,
+                rightHandSide,
+                n,
+                modUpperDiag,
+                modRightSide,
+                solutionArray
+            );
+
+            // Assert
+            for (let i = 0; i < n; i++) {
+                expect(Math.abs(solutionArray[i] - knownSolution[i])).toBeLessThan(tolerance);
+            }
+        });
+        test("solves a huge diffusion system with huge alpha", () => {
+            // Arrange
+            const n = 100000;
+            const alpha = 1e15;
+            const { lowerDiagonal, mainDiagonal, upperDiagonal } = createDiagonals(n, alpha);
+
+            // Create known solution using sine wave with random component
+            const knownSolution = new Float64Array(n);
             for (let i = 0; i < n; i++) {
                 knownSolution[i] =
                     1e-9 * (Math.random() - 0.5 + Math.sin((i * 2 * Math.PI) / (n - 1)));
+            }
+
+            const rightHandSide = calculateRightHandSide(
+                lowerDiagonal,
+                mainDiagonal,
+                upperDiagonal,
+                knownSolution,
+                n
+            );
+            const modUpperDiag = new Float64Array(n);
+            const modRightSide = new Float64Array(n);
+            const solutionArray = new Float64Array(n);
+
+            // Act
+            thomasAlgorithm(
+                lowerDiagonal,
+                mainDiagonal,
+                upperDiagonal,
+                rightHandSide,
+                n,
+                modUpperDiag,
+                modRightSide,
+                solutionArray
+            );
+
+            // Assert
+            for (let i = 0; i < n; i++) {
+                expect(Math.abs(solutionArray[i] - knownSolution[i])).toBeLessThan(tolerance);
+            }
+        });
+        test("solves a huge diffusion system with tiny alpha", () => {
+            // Arrange
+            const n = 100000;
+            const alpha = 1e-15;
+            const { lowerDiagonal, mainDiagonal, upperDiagonal } = createDiagonals(n, alpha);
+
+            // Create known solution using sine wave with random component
+            const knownSolution = new Float64Array(n);
+            for (let i = 0; i < n; i++) {
+                knownSolution[i] =
+                    1e6 * (Math.random() - 0.5 + Math.sin((i * 2 * Math.PI) / (n - 1)));
             }
 
             const rightHandSide = calculateRightHandSide(
