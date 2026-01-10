@@ -8,9 +8,9 @@ let modifiedUpperDiagonal2, modifiedRightHandSide2, solution2;
 let intermediateConcentration;
 let a1, b1, c1, d1;
 let a2, b2, c2, d2;
-let alpha, halfDeltaT, oneMinus2Alpha, scaledSources;
+let alpha, halfDeltaT, oneMinus2AlphaMinusGamma, scaledSources;
 
-export const setADIProperties = (width, height, diffusionCoefficient, deltaX, deltaT) => {
+export const setADIProperties = (width, height, diffusionCoefficient, deltaX, deltaT, decayRate = 0) => {
     WIDTH = width;
     HEIGHT = height;
     ({
@@ -31,18 +31,22 @@ export const setADIProperties = (width, height, diffusionCoefficient, deltaX, de
         d2,
         alpha,
         halfDeltaT,
-        oneMinus2Alpha,
+        oneMinus2AlphaMinusGamma,
         scaledSources,
-    } = initADIArrays(WIDTH, HEIGHT, diffusionCoefficient, deltaX, deltaT));
+    } = initADIArrays(WIDTH, HEIGHT, diffusionCoefficient, deltaX, deltaT, decayRate));
 };
 
-export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
+export const ADI = (
+    concentrationData,
+    sources,
+    totalNumberOfIterations,
+    allowNegativeValues = false,
+) => {
     let reachedNegativeValue = false;
 
     for (let idx = 0; idx < WIDTH * HEIGHT; idx++) {
         scaledSources[idx] = sources[idx] * halfDeltaT;
     }
-
 
     const currentConcentrationData = concentrationData;
 
@@ -59,7 +63,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
                 const bottom = currentConcentrationData[(j - 1) * WIDTH + i];
                 const top = currentConcentrationData[(j + 1) * WIDTH + i];
 
-                d1[i] = alpha * bottom + oneMinus2Alpha * center + alpha * top + scaledSources[idx];
+                d1[i] = alpha * bottom + oneMinus2AlphaMinusGamma * center + alpha * top + scaledSources[idx];
             }
 
             thomasAlgorithm(
@@ -87,7 +91,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
             const bottom = center;
             const top = currentConcentrationData[1 * WIDTH + i];
 
-            d1[i] = alpha * bottom + oneMinus2Alpha * center + alpha * top + scaledSources[idx];
+            d1[i] = alpha * bottom + oneMinus2AlphaMinusGamma * center + alpha * top + scaledSources[idx];
         }
         thomasAlgorithm(
             a1,
@@ -112,7 +116,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
             const bottom = currentConcentrationData[(HEIGHT - 2) * WIDTH + i];
             const top = center;
 
-            d1[i] = alpha * bottom + oneMinus2Alpha * center + alpha * top + scaledSources[idx];
+            d1[i] = alpha * bottom + oneMinus2AlphaMinusGamma * center + alpha * top + scaledSources[idx];
         }
         thomasAlgorithm(
             a1,
@@ -140,7 +144,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
                     i >= WIDTH - 1 ? center : intermediateConcentration[j * WIDTH + (i + 1)];
                 const left = i <= 0 ? center : intermediateConcentration[j * WIDTH + (i - 1)];
 
-                d2[j] = alpha * left + oneMinus2Alpha * center + alpha * right + scaledSources[idx];
+                d2[j] = alpha * left + oneMinus2AlphaMinusGamma * center + alpha * right + scaledSources[idx];
             }
 
             thomasAlgorithm(
@@ -172,7 +176,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
             const right = intermediateConcentration[j * WIDTH + 1];
             const left = center;
 
-            d2[j] = alpha * left + oneMinus2Alpha * center + alpha * right + scaledSources[idx];
+            d2[j] = alpha * left + oneMinus2AlphaMinusGamma * center + alpha * right + scaledSources[idx];
         }
         thomasAlgorithm(
             a2,
@@ -201,7 +205,7 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
             const right = center;
             const left = intermediateConcentration[j * WIDTH + (WIDTH - 2)];
 
-            d2[j] = alpha * left + oneMinus2Alpha * center + alpha * right + scaledSources[idx];
+            d2[j] = alpha * left + oneMinus2AlphaMinusGamma * center + alpha * right + scaledSources[idx];
         }
         thomasAlgorithm(
             a2,
@@ -221,11 +225,9 @@ export const ADI = (concentrationData, sources, totalNumberOfIterations) => {
         }
     }
 
-    if (reachedNegativeValue) {
+    if (reachedNegativeValue && !allowNegativeValues) {
         console.warn("Concentration went negative at ADI");
-        //return null;
+        return null;
     }
     return currentConcentrationData;
 };
-
-

@@ -418,7 +418,7 @@ describe("Thomas Algorithm", () => {
             // Create known solution using sine wave with random component
             const knownSolution = new Float64Array(n);
             for (let i = 0; i < n; i++) {
-                knownSolution[i] = 1e6 * (Math.random() - 0.5);  
+                knownSolution[i] = 1e6 * (Math.random() - 0.5);
             }
 
             const rightHandSide = calculateRightHandSide(
@@ -499,7 +499,7 @@ describe("Thomas Algorithm", () => {
 
             // Create known solution using sine wave with random component
             const knownSolution = new Float64Array(n);
-            for (let i = 0; i < n; i++) { 
+            for (let i = 0; i < n; i++) {
                 knownSolution[i] =
                     1e-9 * (Math.random() - 0.5 + Math.sin((i * 2 * Math.PI) / (n - 1)));
             }

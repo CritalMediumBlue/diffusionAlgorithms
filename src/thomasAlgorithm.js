@@ -50,19 +50,19 @@ const tolerance = 1e-10;
  * const main = [2, 2, 2];
  * const upper = [1, 1, 0];          // Last element unused
  * const rhs = [3, 4, 3];
- * 
+ *
  * // Pre-allocate working arrays
  * const modUpper = new Float64Array(n);
  * const modRHS = new Float64Array(n);
  * const solution = new Float64Array(n);
- * 
+ *
  * thomasAlgorithm(lower, main, upper, rhs, n, modUpper, modRHS, solution);
  * console.log(solution); // [1, 1, 1]
  *
  * @see {@link ADI} Uses this algorithm for implicit solving
  * @see {@link initADIArrays} Pre-allocates working arrays
  *
- * @reference Thomas, L. H. (1949). Elliptic problems in linear difference equations 
+ * @reference Thomas, L. H. (1949). Elliptic problems in linear difference equations
  * over a network. Watson Sci. Comput. Lab. Rept., Columbia University, New York.
  */
 export function thomasAlgorithm(
