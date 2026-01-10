@@ -58,8 +58,8 @@ export const analiticSteadyState = (
     DIFFUSION_RATE,
     DECAY_RATE,
     deltaX,
-    sources,
-    maxMode = 60
+    sources, // sources representing rate per cell (not per unit area)
+    maxMode 
 ) => {
     const steadyStateConcentration = new Float64Array(WIDTH * HEIGHT).fill(0);
     
