@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Diffusion Comparison</title>
     <script type="module" src="numericVSanalytic.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
         }
         #numerical-plot, #analytic-plot, #comparison-plot {
-            width: 50%;
-            margin-bottom: 20px;
+            width: 600px;
+            height: 600px;
+            margin-bottom: 40px;
         }
     </style>
 </head>
 <body>
+    <h1>2D Diffusion Solutions Comparison</h1>
     <div id="numerical-plot"></div>
     <div id="analytic-plot"></div>
     <div id="comparison-plot"></div>

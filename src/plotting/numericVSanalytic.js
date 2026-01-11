@@ -8,15 +8,21 @@ const height = 100;
 const diffusionCoefficient = 1.0;
 const deltaX = 1.0;
 const deltaT = 0.1;
-const decayRate = 0.01;
+const decayRate = 0.002;
 
 setADIProperties(width, height, diffusionCoefficient, deltaX, deltaT, decayRate);
 const sources = new Float64Array(width * height);
 
-sources[Math.floor(height / 2) * width + Math.floor(width / 2)] = 1
-const maxmode = width / 2
+for (let j = 0; j < height; j++) {
+    for (let i = 0; i < width; i++) {
+        const idx = j * width + i;
+        sources[idx] = Math.random() < 0.002 ? 1.0 : 0.0;
+    }
+}
 
-const checkForSteadyState = (prev, current, tolerance = 1e-6) => {
+const maxmode = 40;
+
+const checkForSteadyState = (prev, current, tolerance = 1e-5) => {
     let maxDiff = 0;
     for (let i = 0; i < prev.length; i++) {
         const diff = Math.abs(current[i] - prev[i]);
@@ -70,12 +76,16 @@ const numericalTrace = {
 };
 
 const numericalLayout = {
-    title: 'Numerical Solution (ADI Method)',
-    xaxis: { title: 'X Position' },
-    yaxis: { title: 'Y Position' },
+    title: {
+        text: 'Numerical Solution (ADI Method)',
+        font: { size: 20 }
+    },
+    xaxis: { title: { text: 'X Position' } },
+    yaxis: { title: { text: 'Y Position' } },
+    margin: { t: 100, b: 80, l: 80, r: 100 },
 };
  
-Plotly.newPlot('numerical-plot', [numericalTrace], numericalLayout);
+Plotly.newPlot('numerical-plot', [numericalTrace], numericalLayout, {responsive: true});
 
 // Create analytical solution heatmap
 const analyticalTrace = {
@@ -86,12 +96,16 @@ const analyticalTrace = {
 };
 
 const analyticalLayout = {
-    title: 'Analytical Solution',
-    xaxis: { title: 'X Position' },
-    yaxis: { title: 'Y Position' },
+    title: {
+        text: 'Analytical Solution',
+        font: { size: 20 }
+    },
+    xaxis: { title: { text: 'X Position' } },
+    yaxis: { title: { text: 'Y Position' } },
+    margin: { t: 100, b: 80, l: 80, r: 100 },
 };
 
-Plotly.newPlot('analytic-plot', [analyticalTrace], analyticalLayout);
+Plotly.newPlot('analytic-plot', [analyticalTrace], analyticalLayout, {responsive: true});
 
 // Compute and display difference
 const differenceData = numericalData.map((row, j) =>
@@ -107,9 +121,13 @@ const differenceTrace = {
 }; 
 
 const differenceLayout = {
-    title: 'Difference Between Numerical and Analytical Solutions',
-    xaxis: { title: 'X Position' },
-    yaxis: { title: 'Y Position' },
+    title: {
+        text: 'Difference Between Numerical and Analytical Solutions',
+        font: { size: 20 }
+    },
+    xaxis: { title: { text: 'X Position' } },
+    yaxis: { title: { text: 'Y Position' } },
+    margin: { t: 100, b: 80, l: 80, r: 100 },
 };
 
-Plotly.newPlot('comparison-plot', [differenceTrace], differenceLayout);
+Plotly.newPlot('comparison-plot', [differenceTrace], differenceLayout, {responsive: true});
