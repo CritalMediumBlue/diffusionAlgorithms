@@ -39,7 +39,7 @@ function analyticalSolution(initialConcentration, expTerm) {
     for (let idx = 0; idx < length; idx++) {
         result[idx] = initialConcentration[idx] * expTerm; //when initial condition is an eigenfunction, the solution is a simple multiplication
     }
-    return result; 
+    return result;
 }
 
 describe("Without sources or sinks, zero mode numbers", () => {
@@ -50,47 +50,41 @@ describe("Without sources or sinks, zero mode numbers", () => {
     const WIDTH = 100;
     const HEIGHT = 60;
 
-    test.each(timeLapses)(
-        "%s sec - ADI matches analytical solution",
-        (timeLapse) => {
-            // Arrange
-            const sources = new Float64Array(WIDTH * HEIGHT).fill(0); // No sources or sinks
-            setADIProperties(WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT);
-            const m = 0;
-            const n = 0;
-            const iterations = Math.round(timeLapse / deltaT);
-            const initial = eigenFunction(m, n, WIDTH, HEIGHT, deltaX);
-            const eigenvalue = eigenValue(m, n, WIDTH, HEIGHT, deltaX);
-            const expTerm = exponentialDecayInTime(eigenvalue, timeLapse, DIFFUSION_RATE);
-            const analytical = analyticalSolution(initial, expTerm);
+    test.each(timeLapses)("%s sec - ADI matches analytical solution", (timeLapse) => {
+        // Arrange
+        const sources = new Float64Array(WIDTH * HEIGHT).fill(0); // No sources or sinks
+        setADIProperties(WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT);
+        const m = 0;
+        const n = 0;
+        const iterations = Math.round(timeLapse / deltaT);
+        const initial = eigenFunction(m, n, WIDTH, HEIGHT, deltaX);
+        const eigenvalue = eigenValue(m, n, WIDTH, HEIGHT, deltaX);
+        const expTerm = exponentialDecayInTime(eigenvalue, timeLapse, DIFFUSION_RATE);
+        const analytical = analyticalSolution(initial, expTerm);
 
-            // Act
+        // Act
 
-            const resultADI = ADI(initial, sources, iterations, true);
+        const resultADI = ADI(initial, sources, iterations, true);
 
-            // Assert L2 norm (root mean square error) and Max Error
-            let sumSquaredErrors = 0;
-            let maxError = 0;
-            for (let j = 0; j < HEIGHT; j++) {
-                for (let i = 0; i < WIDTH; i++) {
-                    const idx = j * WIDTH + i;
-                    const error = resultADI[idx] - analytical[idx];
-                    sumSquaredErrors += error * error;
-                    if (Math.abs(error) > maxError) {
-                        maxError = Math.abs(error);
-                    }
+        // Assert L2 norm (root mean square error) and Max Error
+        let sumSquaredErrors = 0;
+        let maxError = 0;
+        for (let j = 0; j < HEIGHT; j++) {
+            for (let i = 0; i < WIDTH; i++) {
+                const idx = j * WIDTH + i;
+                const error = resultADI[idx] - analytical[idx];
+                sumSquaredErrors += error * error;
+                if (Math.abs(error) > maxError) {
+                    maxError = Math.abs(error);
                 }
             }
-            const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
-
-            
-
-            expect(rmsError).toBeLessThan(RMSTolerance);
-            expect(maxError).toBeLessThan(MaxErrTolerance);
         }
-    );
-});
+        const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
 
+        expect(rmsError).toBeLessThan(RMSTolerance);
+        expect(maxError).toBeLessThan(MaxErrTolerance);
+    });
+});
 
 describe("Without sources or sinks, low mode numbers", () => {
     const DIFFUSION_RATE = 1; // micrometer^2 / second
@@ -100,45 +94,40 @@ describe("Without sources or sinks, low mode numbers", () => {
     const WIDTH = 100;
     const HEIGHT = 60;
 
-    test.each(timeLapses)(
-        "%s sec - ADI matches analytical solution",
-        (timeLapse) => {
-            // Arrange
-            const sources = new Float64Array(WIDTH * HEIGHT).fill(0); // No sources or sinks
-            setADIProperties(WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT);
-            const m = 3;
-            const n = 3;
-            const iterations = Math.round(timeLapse / deltaT);
-            const initial = eigenFunction(m, n, WIDTH, HEIGHT, deltaX);
-            const eigenvalue = eigenValue(m, n, WIDTH, HEIGHT, deltaX);
-            const expTerm = exponentialDecayInTime(eigenvalue, timeLapse, DIFFUSION_RATE);
-            const analytical = analyticalSolution(initial, expTerm);
+    test.each(timeLapses)("%s sec - ADI matches analytical solution", (timeLapse) => {
+        // Arrange
+        const sources = new Float64Array(WIDTH * HEIGHT).fill(0); // No sources or sinks
+        setADIProperties(WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT);
+        const m = 3;
+        const n = 3;
+        const iterations = Math.round(timeLapse / deltaT);
+        const initial = eigenFunction(m, n, WIDTH, HEIGHT, deltaX);
+        const eigenvalue = eigenValue(m, n, WIDTH, HEIGHT, deltaX);
+        const expTerm = exponentialDecayInTime(eigenvalue, timeLapse, DIFFUSION_RATE);
+        const analytical = analyticalSolution(initial, expTerm);
 
-            // Act
+        // Act
 
-            const resultADI = ADI(initial, sources, iterations, true);
+        const resultADI = ADI(initial, sources, iterations, true);
 
-            // Assert L2 norm (root mean square error) and Max Error
-            let sumSquaredErrors = 0;
-            let maxError = 0;
-            for (let j = 0; j < HEIGHT; j++) {
-                for (let i = 0; i < WIDTH; i++) {
-                    const idx = j * WIDTH + i;
-                    const error = resultADI[idx] - analytical[idx];
-                    sumSquaredErrors += error * error;
-                    if (Math.abs(error) > maxError) {
-                        maxError = Math.abs(error);
-                    }
+        // Assert L2 norm (root mean square error) and Max Error
+        let sumSquaredErrors = 0;
+        let maxError = 0;
+        for (let j = 0; j < HEIGHT; j++) {
+            for (let i = 0; i < WIDTH; i++) {
+                const idx = j * WIDTH + i;
+                const error = resultADI[idx] - analytical[idx];
+                sumSquaredErrors += error * error;
+                if (Math.abs(error) > maxError) {
+                    maxError = Math.abs(error);
                 }
             }
-            const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
-
-            
-
-            expect(rmsError).toBeLessThan(RMSTolerance);
-            expect(maxError).toBeLessThan(MaxErrTolerance);
         }
-    );
+        const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
+
+        expect(rmsError).toBeLessThan(RMSTolerance);
+        expect(maxError).toBeLessThan(MaxErrTolerance);
+    });
 });
 
 describe("Without sources or sinks, higher mode numbers", () => {
@@ -148,7 +137,7 @@ describe("Without sources or sinks, higher mode numbers", () => {
     const MaxErrTolerance = 2e-3;
     const WIDTH = 100;
     const HEIGHT = 60;
-        test.each(timeLapses)(
+    test.each(timeLapses)(
         "%s sec - ADI matches analytical solution with higher mode numbers",
         (timeLapse) => {
             // Arrange
@@ -181,14 +170,11 @@ describe("Without sources or sinks, higher mode numbers", () => {
             }
             const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
 
-            
-
             expect(rmsError).toBeLessThan(RMSTolerance);
             expect(maxError).toBeLessThan(MaxErrTolerance);
         }
     );
 });
-
 
 describe("Without sources or sinks, high diffusion rate", () => {
     const DIFFUSION_RATE = 20; // micrometer^2 / second
@@ -197,7 +183,7 @@ describe("Without sources or sinks, high diffusion rate", () => {
     const MaxErrTolerance = 2e-3;
     const WIDTH = 100;
     const HEIGHT = 60;
-        test.each(timeLapses)(
+    test.each(timeLapses)(
         "%s sec - ADI matches analytical solution with higher mode numbers",
         (timeLapse) => {
             // Arrange
@@ -229,8 +215,6 @@ describe("Without sources or sinks, high diffusion rate", () => {
                 }
             }
             const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
-
-            
 
             expect(rmsError).toBeLessThan(RMSTolerance);
             expect(maxError).toBeLessThan(MaxErrTolerance);
@@ -243,7 +227,7 @@ describe("Conservation of mass", () => {
     const deltaX = 1; // micrometers
     const WIDTH = 100;
     const HEIGHT = 60;
-        test.each(timeLapses)(
+    test.each(timeLapses)(
         "%s sec - ADI matches analytical solution with higher mode numbers",
         (timeLapse) => {
             // Arrange
@@ -263,7 +247,7 @@ describe("Conservation of mass", () => {
 
             // Assert
             let massSum = 0;
-            let analyticalMassSum = 0; 
+            let analyticalMassSum = 0;
             for (let j = 0; j < HEIGHT; j++) {
                 for (let i = 0; i < WIDTH; i++) {
                     const idx = j * WIDTH + i;

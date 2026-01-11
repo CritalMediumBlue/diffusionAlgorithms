@@ -23,7 +23,7 @@ export const initADIArrays = (WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT, dec
     const scaledSources = new Float64Array(WIDTH * HEIGHT);
 
     const alpha = (DIFFUSION_RATE * deltaT) / (2 * deltaX * deltaX);
-    const gamma = decayRate * deltaT / 4;
+    const gamma = (decayRate * deltaT) / 4;
     const {
         lowerDiagonal: a1,
         mainDiagonal: b1,
