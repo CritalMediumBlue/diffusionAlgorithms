@@ -1,6 +1,7 @@
 import Plotly from 'plotly.js-dist';
 import { ADI, setADIProperties } from '../ADI.js';
-import { analiticSteadyState } from '../analyticSolution.js';
+import { analyticSteadyState } from '../analyticSolution.js';
+import { createRandomSources, checkForSteadyState, convertTo2D, calculateDifference} from '../helpers.js';
 
 
 const width = 100;
@@ -8,33 +9,14 @@ const height = 100;
 const diffusionCoefficient = 1.0;
 const deltaX = 1.0;
 const deltaT = 0.1;
-const decayRate = 0.002;
+const decayRate = 0.01;
+const maxmode = 500; 
+const sources = createRandomSources(width, height, 0.01);
+ 
 
+// calculate numerical solution using ADI
 setADIProperties(width, height, diffusionCoefficient, deltaX, deltaT, decayRate);
-const sources = new Float64Array(width * height);
-
-for (let j = 0; j < height; j++) {
-    for (let i = 0; i < width; i++) {
-        const idx = j * width + i;
-        sources[idx] = Math.random() < 0.002 ? 1.0 : 0.0;
-    }
-}
-
-const maxmode = 40;
-
-const checkForSteadyState = (prev, current, tolerance = 1e-5) => {
-    let maxDiff = 0;
-    for (let i = 0; i < prev.length; i++) {
-        const diff = Math.abs(current[i] - prev[i]);
-        if (diff > maxDiff) {
-            maxDiff = diff;
-        }
-    }
-    return maxDiff < tolerance;
-};
-
 let steadyStateReached = false;
-
 const adiSolution = new Float64Array(width * height).fill(0);
 let previousADISolution = new Float64Array(width * height).fill(0);
 
@@ -44,28 +26,29 @@ while (!steadyStateReached) {
     previousADISolution.set(adiSolution);
 }
 
-
-const analyticSolution = analiticSteadyState(width,
+// calculate analytic solution using eigenfunction expansion
+const analyticSolution = analyticSteadyState(width,
      height, diffusionCoefficient, decayRate, deltaX, sources, maxmode);
     
-//plot both solutions using plotly.js
+// calculate difference between numerical and analytical solutions
+const difference = calculateDifference(adiSolution, analyticSolution);
+const logDifference = new Float64Array(difference.length);
+for (let i = 0; i < difference.length; i++) {
+    logDifference[i] = Math.log10(Math.abs(difference[i]) + 1e-20); // add small value to avoid log(0)
+}
 
 
-// Convert 1D arrays to 2D matrices for Plotly
-const convertTo2D = (array, width, height) => {
-    const matrix = [];
-    for (let j = 0; j < height; j++) {
-        const row = [];
-        for (let i = 0; i < width; i++) {
-            row.push(array[j * width + i]);
-        }
-        matrix.push(row);
-    }
-    return matrix;
-};
+
+
+
+
+
+
 
 const numericalData = convertTo2D(adiSolution, width, height);
 const analyticalData = convertTo2D(analyticSolution, width, height);
+const differenceData = convertTo2D(difference, width, height);
+const logDifferenceData = convertTo2D(logDifference, width, height);
 
 // Create numerical solution heatmap
 const numericalTrace = {
@@ -107,10 +90,7 @@ const analyticalLayout = {
 
 Plotly.newPlot('analytic-plot', [analyticalTrace], analyticalLayout, {responsive: true});
 
-// Compute and display difference
-const differenceData = numericalData.map((row, j) =>
-    row.map((val, i) => Math.log(Math.abs(val - analyticalData[j][i])))
-);
+
 
 // Create difference heatmap
 const differenceTrace = {
@@ -131,3 +111,23 @@ const differenceLayout = {
 };
 
 Plotly.newPlot('comparison-plot', [differenceTrace], differenceLayout, {responsive: true});
+
+// Create log difference heatmap
+const logDifferenceTrace = {
+    z: logDifferenceData,
+    type: 'heatmap',
+    colorscale: 'Viridis',
+    colorbar: { title: 'Log10 Absolute Difference' },
+};
+
+const logDifferenceLayout = {
+    title: {
+        text: 'Logarithmic Difference Between Numerical and Analytical Solutions',
+        font: { size: 20 }
+    },
+    xaxis: { title: { text: 'X Position' } },
+    yaxis: { title: { text: 'Y Position' } },
+    margin: { t: 100, b: 80, l: 80, r: 100 },
+};
+
+Plotly.newPlot('log-comparison-plot', [logDifferenceTrace], logDifferenceLayout, {responsive: true});

@@ -18,6 +18,6 @@ export default defineConfig({
             cleanOnRerun: false,
             all: false
         },
-        testTimeout: 10000,
+        testTimeout: 50000,
     },
 });

@@ -1,70 +1,28 @@
-// Analytic steady-state solution for 2D diffusion equation with constant sources and constant decay rate
-function eigenFunction(n, m, WIDTH, HEIGHT, deltaX) {
-    const concentrationField = new Float64Array(WIDTH * HEIGHT);
 
-    for (let j = 0; j < HEIGHT; j++) {
-        for (let i = 0; i < WIDTH; i++) {
-            const x = (i + 0.5) * deltaX;
-            const y = (j + 0.5) * deltaX;
-            concentrationField[j * WIDTH + i] = eigenFunctionAtLocation(
-                n,
-                m,
-                x,
-                y,
-                WIDTH,
-                HEIGHT,
-                deltaX
-            );
-        }
-    }
-    return concentrationField;
-}
 
-function eigenFunctionAtLocation(n, m, x, y, WIDTH, HEIGHT, deltaX) {
-    const Lx = WIDTH * deltaX;
-    const Ly = HEIGHT * deltaX;
-    const nPi_Lx = (Math.PI * n) / Lx;
-    const mPi_Ly = (Math.PI * m) / Ly;
-    return Math.cos(nPi_Lx * x) * Math.cos(mPi_Ly * y); // Cosine eigenfunctions for Neumann (reflective) BCs
-}
-
-function eigenValue(n, m, WIDTH, HEIGHT, deltaX) {
-    const Lx = WIDTH * deltaX;
-    const Ly = HEIGHT * deltaX;
-    return Math.PI * Math.PI * ((n * n) / (Lx * Lx) + (m * m) / (Ly * Ly));
-}
-
-function k_mn(diffusionRate, eigenvalue, decayRate) {
-    return diffusionRate * eigenvalue + decayRate;
-}
-
-function constantSourceTerm(n, m, WIDTH, HEIGHT, deltaX, sources, activeSourceIndices = null) {
-    const e_n = n === 0 ? 1 / 2 : 1;
-    const e_m = m === 0 ? 1 / 2 : 1;
-    const Lx = WIDTH * deltaX;
-    const Ly = HEIGHT * deltaX;
+function constantSourceTermOptimized(n, m, Lx, Ly, sources, activeSourceIndices, cosX, cosY, WIDTH) {
+    const e_n = n === 0 ? 0.5 : 1;
+    const e_m = m === 0 ? 0.5 : 1;
     const coefficient = (4 * e_n * e_m) / (Lx * Ly);
     let sum = 0;
 
     for (const idx of activeSourceIndices) {
         const i = idx % WIDTH;
         const j = Math.floor(idx / WIDTH);
-        const x = (i + 0.5) * deltaX;
-        const y = (j + 0.5) * deltaX;
-        sum += sources[idx] * eigenFunctionAtLocation(n, m, x, y, WIDTH, HEIGHT, deltaX); //sources[idx] represents the total rate injected into that cell
+        sum += sources[idx] * cosX[n][i] * cosY[m][j];
     }
 
     return coefficient * sum;
 }
 
-export const analiticSteadyState = (
+export const analyticSteadyState = (
     WIDTH,
     HEIGHT,
     DIFFUSION_RATE,
     DECAY_RATE,
-    deltaX,
+    deltaX, 
     sources, // sources representing rate per cell (not per unit area)
-    maxMode
+    maxMode 
 ) => {
     const steadyStateConcentration = new Float64Array(WIDTH * HEIGHT).fill(0);
 
@@ -74,25 +32,78 @@ export const analiticSteadyState = (
         if (sources[idx] !== 0) activeSourceIndices.push(idx);
     }
 
+    // Early return if no sources
+    if (activeSourceIndices.length === 0) {
+        return steadyStateConcentration;
+    }
+
+    const Lx = WIDTH * deltaX;
+    const Ly = HEIGHT * deltaX;
+    const piSquared = Math.PI * Math.PI;
+    const LxSquared = Lx * Lx;
+    const LySquared = Ly * Ly;
+    const invLxSquared = 1 / LxSquared;
+    const invLySquared = 1 / LySquared;
+
+    // Precompute all x and y coordinates
+    const xCoords = new Float64Array(WIDTH);
+    const yCoords = new Float64Array(HEIGHT);
+    for (let i = 0; i < WIDTH; i++) xCoords[i] = (i + 0.5) * deltaX;
+    for (let j = 0; j < HEIGHT; j++) yCoords[j] = (j + 0.5) * deltaX;
+
+    // Precompute cosine values for all modes and positions
+    const cosX = Array(maxMode + 1);
+    const cosY = Array(maxMode + 1);
+
+    for (let n = 0; n <= maxMode; n++) {
+        const nPi_Lx = (Math.PI * n) / Lx;
+        cosX[n] = new Float64Array(WIDTH);
+        for (let i = 0; i < WIDTH; i++) {
+            cosX[n][i] = Math.cos(nPi_Lx * xCoords[i]);
+        }
+    }
+
+    for (let m = 0; m <= maxMode; m++) {
+        const mPi_Ly = (Math.PI * m) / Ly;
+        cosY[m] = new Float64Array(HEIGHT);
+        for (let j = 0; j < HEIGHT; j++) {
+            cosY[m][j] = Math.cos(mPi_Ly * yCoords[j]);
+        }
+    }
+
+    // Precompute squared mode numbers
+    const nSquared = new Float64Array(maxMode + 1);
+    const mSquared = new Float64Array(maxMode + 1);
+    for (let n = 0; n <= maxMode; n++) nSquared[n] = n * n;
+    for (let m = 0; m <= maxMode; m++) mSquared[m] = m * m;
+
+    // Compute steady-state solution
     for (let m = 0; m <= maxMode; m++) {
         for (let n = 0; n <= maxMode; n++) {
-            const eigenvalue = eigenValue(n, m, WIDTH, HEIGHT, deltaX);
-            const K_mn = k_mn(DIFFUSION_RATE, eigenvalue, DECAY_RATE);
-            const Q_mn = constantSourceTerm(
+            const eigenvalue = piSquared * (nSquared[n] * invLxSquared + mSquared[m] * invLySquared);
+            const K_mn = DIFFUSION_RATE * eigenvalue + DECAY_RATE;
+            const Q_mn = constantSourceTermOptimized(
                 n,
                 m,
-                WIDTH,
-                HEIGHT,
-                deltaX,
+                Lx,
+                Ly,
                 sources,
-                activeSourceIndices
+                activeSourceIndices,
+                cosX,
+                cosY,
+                WIDTH
             );
             const amplitude = Q_mn / K_mn;
 
-            const eigenFunc = eigenFunction(n, m, WIDTH, HEIGHT, deltaX);
+            // Skip modes with negligible contribution
+            if (Math.abs(amplitude) < 1e-15) continue;
 
-            for (let idx = 0; idx < WIDTH * HEIGHT; idx++) {
-                steadyStateConcentration[idx] += amplitude * eigenFunc[idx];
+            // Compute and accumulate eigenfunction values directly
+            for (let j = 0; j < HEIGHT; j++) {
+                const cosYval = cosY[m][j];
+                for (let i = 0; i < WIDTH; i++) {
+                    steadyStateConcentration[j * WIDTH + i] += amplitude * cosX[n][i] * cosYval;
+                }
             }
         }
     }

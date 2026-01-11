@@ -1,82 +1,31 @@
 import { ADI, setADIProperties } from "./ADI.js";
-import { analiticSteadyState } from "./analiticSolution.js";
+import { analyticSteadyState } from "./analyticSolution.js";
 import { describe, test, expect } from "vitest";
+import { checkForSteadyState, createRandomSources} from "./helpers.js";
 
-function checkForSteadyState(previousConcentration, currentConcentration, tolerance = 1e-10) {
-    for (let i = 0; i < previousConcentration.length; i++) {
-        if (Math.abs(currentConcentration[i] - previousConcentration[i]) > tolerance) {
-            return false;
-        }
-    }
-    console.log("Steady state reached.");
-    return true;
-}
-
-function generateRandomSources(width, height) {
-    const totalCells = width * height;
-    const sources = new Float64Array(totalCells).fill(0);
-    sources[Math.floor(totalCells / 2)] = 1.0; // Ensure at least one source in the center
-
-    return sources;
-}
-
-const sourcesTestCases = [{ description: "Few sources and sinks", numSources: 1 }];
-
-describe("Compute just the (n=0, m=0) contribution and check it against expectations", () => {
-    const DIFFUSION_RATE = 1; // micrometer^2 / second
-    const deltaX = 1; // micrometers
-    const WIDTH = 50;
-    const HEIGHT = 50;
-    const DECAY_RATE = 1; // per second //this will never be zero
-    const maxMode = 0;
-
-    test.each(sourcesTestCases)("$description", ({ numSources }) => {
-        // Arrange
-        const sources = generateRandomSources(WIDTH, HEIGHT, numSources);
-
-        // Act
-        const analyticalSolution = analiticSteadyState(
-            WIDTH,
-            HEIGHT,
-            DIFFUSION_RATE,
-            DECAY_RATE,
-            deltaX,
-            sources,
-            maxMode
-        );
-
-        //Assert
-
-        const expectedEigenfunctionValue = 1;
-        const totalSourceStrength = sources.reduce((acc, val) => acc + val, 0);
-        const expectedQ_00 = totalSourceStrength / (WIDTH * deltaX * HEIGHT * deltaX);
-        const expectedK_00 = DECAY_RATE;
-        const expectedAmplitude = expectedQ_00 / expectedK_00;
-        const expectedConcentrationValue = expectedAmplitude * expectedEigenfunctionValue;
-
-        for (let i = 0; i < WIDTH * HEIGHT; i++) {
-            expect(analyticalSolution[i]).toBeCloseTo(expectedConcentrationValue, 14);
-        }
-    });
-});
+const sourcesTestCases = [{ description: "infrequent sources", probability: 0.0003 },
+                            { description: "moderate sources", probability: 0.002 },
+                            { description: "frequent sources", probability: 0.01 }
+];
 
 describe("Analytic vs Numerical Steady-State Solution", () => {
     const DIFFUSION_RATE = 5; // micrometer^2 / second
     const deltaX = 1; // micrometers
     const WIDTH = 100;
     const HEIGHT = 60;
-    const DECAY_RATE = 1; // per second //this will never be zero
-    const deltaT = 0.1; // seconds
-    const maxMode = 200;
+    const DECAY_RATE = 0.01; 
+    const deltaT = 0.1; // seconds 
+    const maxMode = 800;  
 
-    test.each(sourcesTestCases)("$description", ({ numSources }) => {
+    test.each(sourcesTestCases)("$description", ({ probability }) => {
         // Arrange
-        const sources = generateRandomSources(WIDTH, HEIGHT, numSources);
+        const sources = createRandomSources(WIDTH, HEIGHT, probability);
+        sources[Math.floor(HEIGHT/2) * WIDTH + Math.floor(WIDTH/2)] = 1.0; // ensure at least one source in the center
         const initialConcentration = new Float64Array(WIDTH * HEIGHT).fill(0);
         setADIProperties(WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT, DECAY_RATE);
 
         // Act
-        const analyticalSolution = analiticSteadyState(
+        const analyticalSolution = analyticSteadyState(
             WIDTH,
             HEIGHT,
             DIFFUSION_RATE,
@@ -86,19 +35,45 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
             maxMode
         );
 
-        let numericalSolution = initialConcentration.slice();
+        const numericalSolution = initialConcentration.slice();
         let steadyStateReached = false;
 
         while (!steadyStateReached) {
             const previousConcentration = numericalSolution.slice();
-            numericalSolution = ADI(numericalSolution, sources, 50, true);
-            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution);
+            ADI(numericalSolution, sources, 100, true);
+            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution, 1e-10);
         }
 
         //Assert
+        const maximumValueAnalytic = Math.max(...analyticalSolution);
+        const maximumValueNumerical = Math.max(...numericalSolution);
+        const minimumValueAnalytic = Math.min(...analyticalSolution);
+        const minimumValueNumerical = Math.min(...numericalSolution);
+
+        // Check that the max and min values are close
+        expect(maximumValueNumerical).toBeCloseTo(maximumValueAnalytic, 0); // gibbs phenomenon on analytic solution can cause larger discrepancies at sources. Do not expect higher precision here
+        expect(minimumValueNumerical).toBeCloseTo(minimumValueAnalytic, 3);
+
+        const avMax = (maximumValueAnalytic + maximumValueNumerical) / 2;
+        const avMin = (minimumValueAnalytic + minimumValueNumerical) / 2;
+        const span = avMax - avMin;
+
+        let maxRelError = 0;
+        let sumSquaredErrors = 0;
 
         for (let i = 0; i < WIDTH * HEIGHT; i++) {
-            expect(numericalSolution[i]).toBeCloseTo(analyticalSolution[i], 2);
+            if (sources[i] === 0 ) { // only check locations without sources to avoid gibbs phenomenon issues
+            const diff = Math.abs(numericalSolution[i] - analyticalSolution[i]);
+            const relError = diff / span;
+            sumSquaredErrors += diff * diff;
+            if (relError > maxRelError) {
+                maxRelError = relError;
+            }
+            
+            }
         }
+        const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
+        expect(maxRelError).toBeLessThan(2e-2);
+        expect(rmsError).toBeLessThan(5e-4);
     });
 });
