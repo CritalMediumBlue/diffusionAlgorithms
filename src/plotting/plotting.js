@@ -11,7 +11,7 @@ const deltaX = 1.0;
 const deltaT = 0.1;
 const decayRate = 0.01;
 const maxmode = 500; 
-const sources = createRandomSources(width, height, 0.01);
+const sources = createRandomSources(width, height, 0.05);
  
 
 // calculate numerical solution using ADI

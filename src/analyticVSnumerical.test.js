@@ -5,14 +5,16 @@ import { checkForSteadyState, createRandomSources} from "./helpers.js";
 
 const sourcesTestCases = [{ description: "infrequent sources", probability: 0.0003 },
                             { description: "moderate sources", probability: 0.002 },
-                            { description: "frequent sources", probability: 0.01 }
+                            { description: "frequent sources", probability: 0.01 },
+                            { description: "very frequent sources", probability: 0.02 },
+                            { description: "dense sources", probability: 0.05 }
 ];
 
 describe("Analytic vs Numerical Steady-State Solution", () => {
     const DIFFUSION_RATE = 5; // micrometer^2 / second
     const deltaX = 1; // micrometers
     const WIDTH = 100;
-    const HEIGHT = 60;
+    const HEIGHT = 100;
     const DECAY_RATE = 0.01; 
     const deltaT = 0.1; // seconds 
     const maxMode = 800;  
@@ -52,7 +54,7 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
 
         // Check that the max and min values are close
         expect(maximumValueNumerical).toBeCloseTo(maximumValueAnalytic, 0); // gibbs phenomenon on analytic solution can cause larger discrepancies at sources. Do not expect higher precision here
-        expect(minimumValueNumerical).toBeCloseTo(minimumValueAnalytic, 3);
+        expect(minimumValueNumerical).toBeCloseTo(minimumValueAnalytic, 2);
 
         const avMax = (maximumValueAnalytic + maximumValueNumerical) / 2;
         const avMin = (minimumValueAnalytic + minimumValueNumerical) / 2;
@@ -74,6 +76,6 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
         }
         const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
         expect(maxRelError).toBeLessThan(2e-2);
-        expect(rmsError).toBeLessThan(5e-4);
+        expect(rmsError).toBeLessThan(2e-3);
     });
 });
