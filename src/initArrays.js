@@ -38,7 +38,6 @@ export const initADIArrays = (WIDTH, HEIGHT, DIFFUSION_RATE, deltaX, deltaT, dec
     } = generateDiagonals(HEIGHT, alpha, gamma);
     const halfDeltaT = deltaT / 2;
     const oneMinus2AlphaMinusGamma = 1 - 2 * alpha - gamma;
-    console.log("ADI arrays initialized");
     return {
         modifiedUpperDiagonal1,
         modifiedRightHandSide1,

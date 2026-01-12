@@ -1,4 +1,4 @@
-import { thomasAlgorithm } from "./thomasAlgorithm";
+import { thomasAlgorithm } from "../src/thomasAlgorithm";
 import { describe, test, expect } from "vitest";
 
 // Helper function to create diffusion-type tridiagonal system

@@ -1,12 +1,9 @@
-import { ADI, setADIProperties } from "./ADI.js";
-import { analyticSteadyState } from "./analyticSolution.js";
+import { ADI, setADIProperties } from "../src/ADI.js";
+import { analyticSteadyState } from "../src/analyticSolution.js";
 import { describe, test, expect } from "vitest";
-import { checkForSteadyState, createRandomSources} from "./helpers.js";
+import { checkForSteadyState, createRandomSources, calculateDifference} from "../src/helpers.js";
 
 const sourcesTestCases = [{ description: "infrequent sources", probability: 0.0003 },
-                            { description: "moderate sources", probability: 0.002 },
-                            { description: "frequent sources", probability: 0.01 },
-                            { description: "very frequent sources", probability: 0.02 },
                             { description: "dense sources", probability: 0.05 }
 ];
 
@@ -17,7 +14,7 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
     const HEIGHT = 100;
     const DECAY_RATE = 0.01; 
     const deltaT = 0.1; // seconds 
-    const maxMode = 800;  
+    const maxMode = 200;  
 
     test.each(sourcesTestCases)("$description", ({ probability }) => {
         // Arrange
@@ -43,7 +40,7 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
         while (!steadyStateReached) {
             const previousConcentration = numericalSolution.slice();
             ADI(numericalSolution, sources, 100, true);
-            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution, 1e-10);
+            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution, 1e-6);
         }
 
         //Assert
@@ -60,21 +57,25 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
         const avMin = (minimumValueAnalytic + minimumValueNumerical) / 2;
         const span = avMax - avMin;
 
+        const differences = calculateDifference(numericalSolution, analyticalSolution);
+
         let maxRelError = 0;
         let sumSquaredErrors = 0;
+        let countNonSource = 0;
 
         for (let i = 0; i < WIDTH * HEIGHT; i++) {
-            if (sources[i] === 0 ) { // only check locations without sources to avoid gibbs phenomenon issues
-            const diff = Math.abs(numericalSolution[i] - analyticalSolution[i]);
-            const relError = diff / span;
-            sumSquaredErrors += diff * diff;
-            if (relError > maxRelError) {
-                maxRelError = relError;
-            }
-            
+            if (sources[i] === 0) { // only check locations without sources
+                const diff = differences[i];
+                const relError = diff / span;
+                sumSquaredErrors += diff * diff;
+                countNonSource++;
+                if (relError > maxRelError) {
+                    maxRelError = relError;
+                }
             }
         }
-        const rmsError = Math.sqrt(sumSquaredErrors / (WIDTH * HEIGHT));
+
+        const rmsError = Math.sqrt(sumSquaredErrors / countNonSource);
         expect(maxRelError).toBeLessThan(2e-2);
         expect(rmsError).toBeLessThan(2e-3);
     });

@@ -159,9 +159,9 @@ export const ADI = (
                 const idx = rowOffset + i;
 
                 const center = intermediateConcentration[idx];
-                const right =
-                    i >= WIDTH - 1 ? center : intermediateConcentration[j * WIDTH + (i + 1)];
-                const left = i <= 0 ? center : intermediateConcentration[j * WIDTH + (i - 1)];
+        const right = intermediateConcentration[rowOffset + (i + 1)];
+        const left = intermediateConcentration[rowOffset + (i - 1)];
+
 
                 d2[j] =
                     alpha * left +

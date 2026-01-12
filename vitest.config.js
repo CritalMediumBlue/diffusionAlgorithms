@@ -5,6 +5,8 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         passWithNoTests: true,
+        pool: 'threads',
+        singleThread: false,
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
@@ -15,7 +17,6 @@ export default defineConfig({
                 '**/*.test.js',
                 'vitest.config.js'
             ],
-            cleanOnRerun: false,
             all: false
         },
         testTimeout: 50000,

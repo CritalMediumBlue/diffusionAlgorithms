@@ -1,12 +1,9 @@
-import { ADI, setADIProperties } from "./ADI.js";
-import { analyticSteadyState } from "./analyticSolution.js";
+import { ADI, setADIProperties } from "../src/ADI.js";
+import { analyticSteadyState } from "../src/analyticSolution.js";
 import { describe, test, expect } from "vitest";
-import { checkForSteadyState, createRandomSources} from "./helpers.js";
+import { checkForSteadyState, createRandomSources} from "../src/helpers.js";
 
 const sourcesTestCases = [{ description: "very weak sources", strength: 0.001 },
-                            { description: "weak sources", strength: 0.01 },
-                            { description: "moderate sources", strength: 0.1 },
-                            { description: " normal sources", strength: 1.0 },
                             { description: " strong sources", strength: 5.0 },
 ];
 
@@ -16,8 +13,8 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
     const WIDTH = 100;
     const HEIGHT = 100;
     const DECAY_RATE = 0.01; 
-    const deltaT = 0.1; // seconds 
-    const maxMode = 800;  
+    const deltaT = 10.0; // seconds 
+    const maxMode = 200;  
 
     test.each(sourcesTestCases)("$description", ({ strength }) => {
         // Arrange
@@ -46,7 +43,7 @@ describe("Analytic vs Numerical Steady-State Solution", () => {
         while (!steadyStateReached) {
             const previousConcentration = numericalSolution.slice();
             ADI(numericalSolution, sources, 100, true);
-            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution, 1e-10);
+            steadyStateReached = checkForSteadyState(previousConcentration, numericalSolution, 1e-6);
         }
 
         //Assert

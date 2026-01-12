@@ -1,9 +1,9 @@
 
 
-function constantSourceTermOptimized(n, m, Lx, Ly, sources, activeSourceIndices, cosX, cosY, WIDTH) {
+function constantSourceTermOptimized(n, m, Lx, Ly, sources, activeSourceIndices, cosX, cosY, WIDTH, deltaX) {
     const e_n = n === 0 ? 0.5 : 1;
     const e_m = m === 0 ? 0.5 : 1;
-    const coefficient = (4 * e_n * e_m) / (Lx * Ly);
+    const coefficient = (4 * e_n * e_m * deltaX * deltaX) / (Lx * Ly);
     let sum = 0;
 
     for (const idx of activeSourceIndices) {
@@ -21,7 +21,7 @@ export const analyticSteadyState = (
     DIFFUSION_RATE,
     DECAY_RATE,
     deltaX, 
-    sources, // sources representing rate per cell (not per unit area)
+    sources, 
     maxMode 
 ) => {
     const steadyStateConcentration = new Float64Array(WIDTH * HEIGHT).fill(0);
@@ -91,7 +91,8 @@ export const analyticSteadyState = (
                 activeSourceIndices,
                 cosX,
                 cosY,
-                WIDTH
+                WIDTH,
+                deltaX
             );
             const amplitude = Q_mn / K_mn;
 

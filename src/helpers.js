@@ -38,7 +38,6 @@ export const convertTo2D = (array, width, height) => {
 // Compute and display difference
 export const calculateDifference = (grid1, grid2) => {
     const difference = new Float64Array(grid1.length);
-    const differenceLog = new Float64Array(grid1.length);
     for (let i = 0; i < grid1.length; i++) {
         difference[i] = Math.abs(grid1[i] - grid2[i]);
     }
