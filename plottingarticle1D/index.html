@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diffusion Comparison</title>
+    <script type="module" src="plotting.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 5px;
+            padding: 0px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .plots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0px;
+            justify-content: center;
+        }
+        #numerical-plot, #analytic-plot, #comparison-plot, #log-comparison-plot, 
+        #effective-plot, #difference-effective-analytic-plot, #log-difference-effective-analytic-plot,
+        #difference-ignoring-sources-plot,
+        
+            #rms-error-plot {
+            flex: 1 1 calc(33.333% - 20px); /* Three columns */
+            min-width: 300px; /* Minimum width before wrapping */
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diffusion Algorithm: Numerical vs Analytical vs Effective Solutions</h1>
+    <div class="plots-container">
+        <div id="numerical-plot"></div>
+        <div id="analytic-plot"></div>
+        <div id="effective-plot"></div>
+        <div id="comparison-plot"></div>
+        <div id="log-comparison-plot"></div>
+        <div id="difference-effective-analytic-plot"></div>
+        <div id="rms-error-plot"></div>
+        <div id="log-difference-effective-analytic-plot"></div>
+        <div id="difference-ignoring-sources-plot"></div>
+    </div>
+</body>
+</html>

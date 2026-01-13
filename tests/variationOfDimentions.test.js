@@ -11,9 +11,9 @@ const TestCases = [
                     { diffusionCoefficient: 1.0, deltaX: 1.0, width: 100, height: 72, decayRate: 0.01, deltaT: 2.0 },
                     { diffusionCoefficient: 0.8, deltaX: 1.0, width: 80, height: 50, decayRate: 0.01, deltaT: 1.5 },
                     { diffusionCoefficient: 0.8, deltaX: 1.0, width: 80, height: 50, decayRate: 0.01, deltaT: 2.0 },
+                    { diffusionCoefficient: 80, deltaX: 1.0, width: 80, height: 50, decayRate: 0.001, deltaT: 0.1 },
 
-
-                      
+    
 ];
 
 describe("Analytic vs Numerical Steady-State Solution with Varying Dimensions", () => {
