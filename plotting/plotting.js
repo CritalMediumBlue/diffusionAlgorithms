@@ -10,7 +10,9 @@ const height = 100;
 const diffusionCoefficient = 1.0;
 const deltaX = 1.0;
 const deltaT = 0.1;
-const decayRate = 0.01;
+const uptakeRate = 0.01
+
+const decayRate =  uptakeRate / diffusionCoefficient; 
 const maxmode = 200; 
 const sources = createRandomSources(width, height, 0.02);
  
@@ -48,15 +50,25 @@ for (let i = 0; i < width * height; i++) {
 
 // calculate effective solutions for different lambda values
 
-const lambdaValues = [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.0]; // it seems that around 6.3 the best fit is achieved
-const scaleValues = [98, 98.5, 99, 99.5, 100, 100.5, 101, 101.5, 102];
-
-const effectiveSolution = efectiveInfluence(width, height, sources, 7.2, 99);
+/* const lambdaValues = [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.0]; // it seems that around 6.3 the best fit is achieved
+const scaleValues = [98, 98.5, 99, 99.5, 100, 100.5, 101, 101.5, 102]; */
+const lambdaValues = [5.4, 6.0, 6.6, 7.2, 7.8, 8.4, 9.0, 9.6, 10.2]; // it seems that around 6.3 the best fit is achieved
+const scaleValues = [92, 94, 96, 98, 100, 102, 104, 106, 108];
+const lambda = 7.3;
+const scale = 100;
+const effectiveSolution = efectiveInfluence(width, height, sources, lambda, scale);
 
 const differenceEffectiveAnalytic = calculateDifference(effectiveSolution, analyticSolution);
-const logDifferenceEffectiveAnalytic = new Float64Array(differenceEffectiveAnalytic.length);
+const diffEffAnalyIgnoringSources = differenceEffectiveAnalytic.slice();
 for (let i = 0; i < differenceEffectiveAnalytic.length; i++) {
-    logDifferenceEffectiveAnalytic[i] = Math.log10(Math.abs(differenceEffectiveAnalytic[i]) + 1e-20); // add small value to avoid log(0)
+    if (sources[i] !== 0) 
+    {
+        diffEffAnalyIgnoringSources[i] =  1e-4; 
+    }
+}
+const logDifferenceEffectiveAnalytic = new Float64Array(diffEffAnalyIgnoringSources.length);
+for (let i = 0; i < diffEffAnalyIgnoringSources.length; i++) {
+    logDifferenceEffectiveAnalytic[i] = Math.log10(Math.abs(diffEffAnalyIgnoringSources[i]) + 1e-20); // add small value to avoid log(0)
 }
 
 
@@ -66,10 +78,9 @@ for (let i = 0; i < lambdaValues.length; i++) {
     for (let j = 0; j < scaleValues.length; j++) {
         const effectiveSolution = efectiveInfluence(width, height, sources, lambdaValues[i], scaleValues[j]);
         let sumSquares = 0;
-        for (let k = 0; k < effectiveSolution.length; k++) {
-            //if (sources[k] !== 0) continue; // skip source locations
-            const diff = averageResult[k] - effectiveSolution[k];
-            sumSquares += diff * diff;
+        const differences = calculateDifference(averageResult, effectiveSolution);
+        for (let k = 0; k < differences.length; k++) {
+            sumSquares += differences[k] * differences[k];
         }
         allRmsErrors[i * scaleValues.length + j] = Math.sqrt(sumSquares / effectiveSolution.length);
         console.log(`i=${i} of ${lambdaValues.length}, j=${j} of ${scaleValues.length} completed`);
@@ -85,8 +96,30 @@ const differenceData = convertTo2D(difference, width, height);
 const logDifferenceData = convertTo2D(logDifference, width, height);
 const effectiveData = convertTo2D(effectiveSolution, width, height);
 const differenceEffectiveAnalyticData = convertTo2D(differenceEffectiveAnalytic, width, height);
+const differenceEffectiveAnalyticIgnoringSourcesData = convertTo2D(diffEffAnalyIgnoringSources, width, height);
 const logDifferenceEffectiveAnalyticData = convertTo2D(logDifferenceEffectiveAnalytic, width, height);
 const rmsErrorsData = convertTo2D(allRmsErrors, scaleValues.length, lambdaValues.length);
+
+//plot difference with analytical ignoring sources
+
+const differenceIgnoringSourcesTrace = {
+    z: differenceEffectiveAnalyticIgnoringSourcesData,
+    type: 'heatmap',
+    colorscale: 'Viridis',
+    colorbar: { title: 'Absolute Difference' },
+};
+
+const differenceIgnoringSourcesLayout = {
+    title: {
+        text: `Diff Between Effective and Analytic Solutions Ignoring Sources`,
+        font: { size: 20 }
+    },
+    xaxis: { title: { text: 'X Position' } },
+    yaxis: { title: { text: 'Y Position' } },
+    margin: { t: 30, b: 80, l: 80, r: 50 },
+};
+
+Plotly.newPlot(`difference-ignoring-sources-plot`, [differenceIgnoringSourcesTrace], differenceIgnoringSourcesLayout, {responsive: true});
 
 
 // plot the rms errors heatmap
@@ -142,7 +175,7 @@ const analyticalTrace = {
 
 const analyticalLayout = {
     title: {
-        text: 'Analytical Solution',
+        text: 'Analytical Solution (truncated eigenfunction expansion)',
         font: { size: 20 }
     },
     xaxis: { title: { text: 'X Position' } },
@@ -164,7 +197,7 @@ const differenceTrace = {
 
 const differenceLayout = {
     title: {
-        text: 'Difference Between Numerical and Analytical Solutions',
+        text: 'Difference Between ADI and Analytical Solution',
         font: { size: 20 }
     },
     xaxis: { title: { text: 'X Position' } },
@@ -184,7 +217,7 @@ const logDifferenceTrace = {
 
 const logDifferenceLayout = {
     title: {
-        text: 'Logarithmic Difference Between Numerical and Analytical Solutions',
+        text: 'Logarithmic Diff Between ADI and Analytical Solution',
         font: { size: 20 }
     },
     xaxis: { title: { text: 'X Position' } },
@@ -205,7 +238,7 @@ Plotly.newPlot('log-comparison-plot', [logDifferenceTrace], logDifferenceLayout,
 
     const effectiveLayout = {
         title: {
-            text: `Eff. Solution (λ=7.2, Scale=99)`,
+            text: `Eff. Solution (λ=${lambda}, Scale=${scale})`,
             font: { size: 20 }
         },
         xaxis: { title: { text: 'X Position' } },
@@ -226,7 +259,7 @@ Plotly.newPlot('log-comparison-plot', [logDifferenceTrace], logDifferenceLayout,
 
     const differenceEffectiveAnalyticLayout = {
         title: {
-            text: `Diff Between Effective (λ=7.2) and Analytic Solutions`,
+            text: `Diff Between Effective and Analytic Solution`,
             font: { size: 20 }
         },
         xaxis: { title: { text: 'X Position' } },
@@ -245,7 +278,7 @@ Plotly.newPlot('log-comparison-plot', [logDifferenceTrace], logDifferenceLayout,
 
     const logDifferenceEffectiveAnalyticLayout = {
         title: {
-            text: `Log Diff Between Effective (λ=7.2) and Analytic Solutions`,
+            text: `Log Diff Between Effective and Analytic Solutions`,
             font: { size: 20 }
         },
         xaxis: { title: { text: 'X Position' } },

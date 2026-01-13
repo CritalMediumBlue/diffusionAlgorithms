@@ -19,9 +19,11 @@
             justify-content: center;
         }
         #numerical-plot, #analytic-plot, #comparison-plot, #log-comparison-plot, 
-        #effective-plot, #difference-effective-analytic-plot,
+        #effective-plot, #difference-effective-analytic-plot, #log-difference-effective-analytic-plot,
+        #difference-ignoring-sources-plot,
+        
             #rms-error-plot {
-            flex: 1 1 calc(50% - 20px); /* Three columns */
+            flex: 1 1 calc(33.333% - 20px); /* Three columns */
             min-width: 300px; /* Minimum width before wrapping */
             height: 500px;
         }
@@ -33,11 +35,12 @@
         <div id="numerical-plot"></div>
         <div id="analytic-plot"></div>
         <div id="effective-plot"></div>
-        <div id="difference-effective-analytic-plot"></div>
-        <div id="rms-error-plot"></div>
         <div id="comparison-plot"></div>
         <div id="log-comparison-plot"></div>
+        <div id="difference-effective-analytic-plot"></div>
+        <div id="rms-error-plot"></div>
         <div id="log-difference-effective-analytic-plot"></div>
+        <div id="difference-ignoring-sources-plot"></div>
     </div>
 </body>
 </html>
