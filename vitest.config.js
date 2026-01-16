@@ -7,6 +7,7 @@ export default defineConfig({
         passWithNoTests: true,
         pool: 'threads',
         singleThread: false,
+        setupFiles: ['./tests/setup.js'],
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],

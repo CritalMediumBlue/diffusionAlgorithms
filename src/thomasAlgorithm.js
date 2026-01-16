@@ -62,8 +62,6 @@ const tolerance = 1e-10;
  * @see {@link ADI} Uses this algorithm for implicit solving
  * @see {@link initADIArrays} Pre-allocates working arrays
  *
- * @reference Thomas, L. H. (1949). Elliptic problems in linear difference equations
- * over a network. Watson Sci. Comput. Lab. Rept., Columbia University, New York.
  */
 export function thomasAlgorithm(
     lowerDiagonal,
